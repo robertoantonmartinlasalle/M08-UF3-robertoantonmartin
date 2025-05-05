@@ -1,0 +1,7 @@
+{
+  "name": "guardianesApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
