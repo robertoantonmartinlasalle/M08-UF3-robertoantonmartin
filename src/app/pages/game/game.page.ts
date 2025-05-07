@@ -122,32 +122,23 @@ class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Movimiento con teclado: izquierda (flecha o A)
-    if (keys.cursors?.left?.isDown || keys.keys?.A?.isDown) {
+    // Movimiento con teclado y controles táctiles
+    if (keys.cursors?.left?.isDown || keys.keys?.A?.isDown || dir === 'izq') {
       nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
     }
-
-    // Movimiento con teclado: derecha (flecha o D)
-    if (keys.cursors?.right?.isDown || keys.keys?.D?.isDown) {
+    if (keys.cursors?.right?.isDown || keys.keys?.D?.isDown || dir === 'der') {
       nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
     }
 
-    // Movimiento con pantalla táctil
-    if (dir === 'izq') {
-      nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
-    } else if (dir === 'der') {
-      nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
-    }
-
-    // Si se pulsa espacio o el botón táctil, disparo un misil
+    // Disparo por teclado o botón táctil
     if (Phaser.Input.Keyboard.JustDown(keys.keys.SPACE) || shouldShoot) {
       const misil = misiles.create(nave.x, nave.y - (nave.displayHeight / 2), 'misil');
       misil.setScale(0.15);
-      misil.setVelocityY(-400); // El misil sube hacia arriba
-      this.registry.set('touchShoot', false); // Reinicio el disparo táctil
+      misil.setVelocityY(-400);
+      this.registry.set('touchShoot', false);
     }
 
-    // Recorro los misiles para eliminar los que salen de la pantalla
+    // Elimino misiles fuera de pantalla
     misiles.getChildren().forEach((m: Phaser.GameObjects.GameObject) => {
       const sprite = m as Phaser.Physics.Arcade.Image;
       if (sprite.y < -50) {
@@ -155,21 +146,43 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Cada 1.5 segundos genero un nuevo enemigo aleatorio
+    // Genero enemigos cada 1.5 segundos
     if (time > this.tiempoUltimoEnemigo + 1500) {
       this.tiempoUltimoEnemigo = time;
 
-      const tipo = Phaser.Math.Between(0, 2); // 0 = meteorito1, 1 = meteorito2, 2 = bomba
+      const tipo = Phaser.Math.Between(0, 2);
       const spriteKey = tipo === 0 ? 'meteorito1' : tipo === 1 ? 'meteorito2' : 'bomba';
       const x = Phaser.Math.Between(30, width - 30);
       const enemigo = enemigos.create(x, -50, spriteKey);
       enemigo.setScale(0.25);
-      enemigo.setVelocityY(Phaser.Math.Between(100, 200)); // Caída aleatoria en velocidad
+      enemigo.setVelocityY(Phaser.Math.Between(100, 200));
     }
 
-    // Elimino enemigos que ya hayan salido por la parte inferior de la pantalla
+    // Compruebo si los enemigos llegan a la posición exacta de la nave para explotarlos
     enemigos.getChildren().forEach((e: Phaser.GameObjects.GameObject) => {
       const sprite = e as Phaser.Physics.Arcade.Image;
+
+      // Solo explotan si están muy cerca de la posición exacta de la nave (tanto en X como Y)
+      const distanciaX = Math.abs(sprite.x - nave.x);
+      const distanciaY = Math.abs(sprite.y - nave.y);
+
+      if (distanciaX < 40 && distanciaY < 40) {
+        sprite.setVelocityY(0);
+
+        if (sprite.texture.key === 'meteorito1' || sprite.texture.key === 'meteorito2') {
+          sprite.setTexture('explosion');
+          sprite.setScale(0.2);
+        } else if (sprite.texture.key === 'bomba') {
+          sprite.setTexture('bombaColision');
+          sprite.setScale(0.9);
+        }
+
+        this.time.delayedCall(300, () => {
+          sprite.destroy();
+        });
+      }
+
+      // Elimino enemigos que salen por abajo sin tocar la nave
       if (sprite.y > height + 50) {
         enemigos.remove(sprite, true, true);
       }
