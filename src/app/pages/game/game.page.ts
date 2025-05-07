@@ -2,39 +2,40 @@ import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import Phaser from 'phaser';
 
-// He creado esta clase GameScene que extiende Phaser.Scene para poder gestionar toda la lógica del juego (fondo, nave, controles, etc.)
+// Esta clase GameScene contiene toda la lógica del juego: fondo, nave, controles y disparos
 class GameScene extends Phaser.Scene {
+  private misiles!: Phaser.Physics.Arcade.Group;
+
   constructor() {
-    // Aquí le asigno un identificador a la escena para poder referenciarla
-    super({ key: 'game' });
+    super({ key: 'game' }); // Asigno una clave identificadora a la escena
   }
 
-  // Este método preload se ejecuta antes de crear la escena y sirve para cargar todos los recursos del juego
   preload(): void {
+    // Cargo todas las imágenes necesarias para el juego
     this.load.image('background', 'assets/game/background.png');
     this.load.image('background-vertical', 'assets/game/background-vertical.png');
     this.load.image('nave', 'assets/game/nave.png');
+    this.load.image('misil', 'assets/game/Misil.png');
   }
 
-  // En este método creo todos los elementos visuales y los añado a la escena
   create(): void {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Detecto si estoy en un móvil y en vertical para decidir qué imagen usar de fondo
+    // Detecto si es móvil en vertical para poner el fondo vertical o normal
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isVertical = height > width;
     const fondoKey = (isMobile && isVertical) ? 'background-vertical' : 'background';
 
-    // Añado el fondo y lo escalo al tamaño completo de la pantalla
+    // Añado el fondo y lo ajusto al tamaño de pantalla
     const bg = this.add.image(0, 0, fondoKey).setOrigin(0, 0);
     bg.setDisplaySize(width, height);
-    this.registry.set('currentBackground', bg); // Guardo una referencia para redimensionar después
+    this.registry.set('currentBackground', bg);
 
-    // Creo la nave fuera de la pantalla (parte inferior) y luego la animo hacia su posición final
+    // Creo la nave, la posiciono fuera de la pantalla y la animo hacia arriba
     const nave = this.add.image(width / 2, height + 100, 'nave')
       .setOrigin(0.5)
-      .setScale(0.18); // Escalo la nave para que no ocupe demasiado
+      .setScale(0.18);
 
     this.tweens.add({
       targets: nave,
@@ -43,60 +44,73 @@ class GameScene extends Phaser.Scene {
       ease: 'Power2'
     });
 
-    this.registry.set('nave', nave); // Guardo la nave en el registro para accederla en update
+    this.registry.set('nave', nave);
 
-    // Capturo las teclas del cursor y también A y D por si se juega en teclado
+    // Capturo las teclas del teclado (flechas, A, D, espacio)
     const cursors = this.input.keyboard?.createCursorKeys();
-    const keys = this.input.keyboard?.addKeys('A,D');
+    const keys = this.input.keyboard?.addKeys('A,D,SPACE');
     this.registry.set('keys', { cursors, keys });
 
-    // Para móviles: detecto si se ha tocado la izquierda o derecha de la pantalla
+    // Creo un grupo de misiles con físicas para poder moverlos
+    this.misiles = this.physics.add.group();
+    this.registry.set('misiles', this.misiles);
+
+    // En móviles: detecto si se toca la izquierda o derecha de la pantalla
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const dir = pointer.x < width / 2 ? 'izq' : 'der';
       this.registry.set('touchDirection', dir);
     });
 
-    // Cuando se levanta el dedo, dejo de mover la nave
     this.input.on('pointerup', () => {
       this.registry.set('touchDirection', null);
     });
   }
 
-  // Este método se ejecuta en cada frame del juego, y es donde controlo el movimiento de la nave
   override update(): void {
     const nave = this.registry.get('nave') as Phaser.GameObjects.Image;
     const keys = this.registry.get('keys') as any;
     const dir = this.registry.get('touchDirection');
+    const misiles = this.registry.get('misiles') as Phaser.Physics.Arcade.Group;
 
-    // Si no tengo nave o teclas capturadas, salgo
-    if (!nave || !keys) return;
+    if (!nave || !keys || !misiles) return;
 
-    // He aumentado la velocidad de la nave para que se mueva más rápido
     const speed = 10;
-
-    // Uso el ancho actualizado de pantalla, por si ha rotado o redimensionado
     const width = this.scale.width;
 
-    // Movimiento por teclado hacia la izquierda
+    // Movimiento por teclado
     if (keys.cursors?.left?.isDown || keys.keys?.A?.isDown) {
       nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
     }
-
-    // Movimiento por teclado hacia la derecha
     if (keys.cursors?.right?.isDown || keys.keys?.D?.isDown) {
       nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
     }
 
-    // Movimiento táctil en móviles hacia la izquierda o derecha
+    // Movimiento táctil en móviles
     if (dir === 'izq') {
       nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
     } else if (dir === 'der') {
       nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
     }
+
+    // Disparo si se pulsa espacio (solo una vez por pulsación)
+    if (Phaser.Input.Keyboard.JustDown(keys.keys.SPACE)) {
+      // Ahora posiciono el misil justo en la punta de la nave con displayHeight
+      const misil = misiles.create(nave.x, nave.y - (nave.displayHeight / 2), 'misil');
+      misil.setScale(0.15);
+      misil.setVelocityY(-400); // El misil sube hacia arriba
+    }
+
+    // Elimino misiles que ya han salido fuera de la pantalla
+    misiles.getChildren().forEach((m: Phaser.GameObjects.GameObject) => {
+      const sprite = m as Phaser.Physics.Arcade.Image;
+      if (sprite.y < -50) {
+        misiles.remove(sprite, true, true);
+      }
+    });
   }
 }
 
-// Este componente Angular lanza el juego al cargar la vista y gestiona los redimensionados de pantalla
+// Este componente es el que monta el juego dentro de Ionic y gestiona el redimensionado
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -109,7 +123,7 @@ export class GamePage implements AfterViewInit, OnDestroy {
 
   constructor() {}
 
-  // Al iniciar la vista, configuro el juego con Phaser y lo lanzo
+  // Al cargar la vista, lanzo el juego de Phaser con su configuración
   ngAfterViewInit(): void {
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
@@ -117,6 +131,12 @@ export class GamePage implements AfterViewInit, OnDestroy {
       height: window.innerHeight,
       parent: 'phaser-game',
       backgroundColor: '#000000',
+      physics: {
+        default: 'arcade',
+        arcade: {
+          debug: false
+        }
+      },
       scene: GameScene,
       scale: {
         mode: Phaser.Scale.NONE,
@@ -125,10 +145,10 @@ export class GamePage implements AfterViewInit, OnDestroy {
     };
 
     this.phaserGame = new Phaser.Game(config);
-    window.addEventListener('resize', this.resizeGame); // Escucho cambios de tamaño
+    window.addEventListener('resize', this.resizeGame);
   }
 
-  // Si el usuario rota la pantalla o cambia de tamaño, ajusto todo el contenido
+  // Cuando la pantalla cambia de tamaño (rotación, etc.), adapto el fondo y la nave
   resizeGame = () => {
     if (!this.phaserGame?.canvas) return;
 
@@ -141,7 +161,6 @@ export class GamePage implements AfterViewInit, OnDestroy {
     const isVertical = height > width;
     const fondoKey = (isMobile && isVertical) ? 'background-vertical' : 'background';
 
-    // Elimino el fondo anterior y creo uno nuevo adaptado al tamaño actual
     const currentBg = scene.registry.get('currentBackground');
     if (currentBg) currentBg.destroy();
 
@@ -149,7 +168,6 @@ export class GamePage implements AfterViewInit, OnDestroy {
     newBg.setDisplaySize(width, height);
     scene.registry.set('currentBackground', newBg);
 
-    // Elimino la nave anterior y la recreo en la nueva posición
     const naveAnterior = scene.registry.get('nave');
     if (naveAnterior) naveAnterior.destroy();
 
@@ -160,7 +178,6 @@ export class GamePage implements AfterViewInit, OnDestroy {
     scene.registry.set('nave', nuevaNave);
   };
 
-  // Cuando se destruye el componente (al salir de la vista), elimino el listener de resize
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.resizeGame);
   }
