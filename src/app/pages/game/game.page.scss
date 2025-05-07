@@ -1,14 +1,28 @@
 #phaser-game {
-    width: 100vw;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-  
-    canvas {
-      display: block;
-      margin: 0;
-      padding: 0;
-    }
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  canvas {
+    display: block;
+    margin: 0;
+    padding: 0;
   }
-  
+}
+
+.disparo-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  padding: 12px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  background-color: #00ffcc;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
