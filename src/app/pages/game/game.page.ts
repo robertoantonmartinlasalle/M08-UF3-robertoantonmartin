@@ -49,13 +49,7 @@ class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setScale(0.18);
 
-    this.tweens.add({
-      targets: nave,
-      y: height - 80,
-      duration: 700,
-      ease: 'Power2'
-    });
-
+    this.tweens.add({ targets: nave, y: height - 80, duration: 700, ease: 'Power2' });
     this.registry.set('nave', nave);
 
     // Capturo las teclas que utilizaré para moverme (A y D) y disparar (barra espaciadora)
@@ -84,7 +78,6 @@ class GameScene extends Phaser.Scene {
       const dir = pointer.x < width / 2 ? 'izq' : 'der';
       this.registry.set('touchDirection', dir);
     });
-
     this.input.on('pointerup', () => {
       this.registry.set('touchDirection', null);
     });
@@ -93,26 +86,45 @@ class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.misiles, this.enemigos, (misil, enemigo) => {
       const enemigoSprite = enemigo as Phaser.Physics.Arcade.Image;
       const tipo = enemigoSprite.texture.key;
-
       enemigoSprite.setVelocityY(0);
 
       if (tipo === 'meteorito1' || tipo === 'meteorito2') {
         enemigoSprite.setTexture('explosion');
         enemigoSprite.setScale(0.2);
-        enemigoSprite.setData('esExplosion', true); // Marco como explosión para detección posterior
-        this.scoreManager.add(1); // Sumo 1 punto si destruyo un meteorito
+        enemigoSprite.setData('esExplosion', true);
+        this.scoreManager.add(1);
       } else if (tipo === 'bomba') {
         enemigoSprite.setTexture('bombaColision');
         enemigoSprite.setScale(0.9);
-        enemigoSprite.setData('esExplosion', true); // Marco como explosión para detección posterior
-        this.scoreManager.add(1); // También sumo 1 punto por cada bomba destruida
+        enemigoSprite.setData('esExplosion', true);
+        this.scoreManager.add(1);
       }
 
-      misil.destroy(); // El misil desaparece al impactar
+      misil.destroy();
+      this.time.delayedCall(300, () => enemigoSprite.destroy());
+    });
 
-      this.time.delayedCall(300, () => {
-        enemigoSprite.destroy(); // El enemigo también desaparece después de un tiempo
-      });
+    // Nueva lógica: Menú con pausa y panel visible
+    const btnMenu = document.getElementById('btn-menu');
+    const menuPanel = document.getElementById('menu-panel');
+    const btnReanudar = document.getElementById('btn-reanudar');
+    const btnReiniciar = document.getElementById('btn-reiniciar');
+
+    btnMenu?.addEventListener('click', () => {
+      this.scene.pause(); // Pauso el juego al pulsar Menú
+      if (menuPanel) {
+        menuPanel.classList.add('mostrar');
+        (menuPanel as HTMLElement).style.display = 'flex';
+      }
+    });
+
+    btnReanudar?.addEventListener('click', () => {
+      this.scene.resume(); // Reanudo el juego
+      if (menuPanel) (menuPanel as HTMLElement).style.display = 'none';
+    });
+
+    btnReiniciar?.addEventListener('click', () => {
+      this.scene.restart(); // Reinicio completo del juego
     });
   }
 
@@ -131,7 +143,7 @@ class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Muevo la nave hacia la izquierda o la derecha con teclado o control táctil
+    // Muevo la nave con teclado o toque (izquierda o derecha)
     if (keys.cursors?.left?.isDown || keys.keys?.A?.isDown || dir === 'izq') {
       nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
     }
@@ -139,7 +151,7 @@ class GameScene extends Phaser.Scene {
       nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
     }
 
-    // Si se pulsa espacio o el botón táctil, disparo un misil desde la nave
+    // Disparo un misil si se pulsa espacio o el botón táctil
     if (Phaser.Input.Keyboard.JustDown(keys.keys.SPACE) || shouldShoot) {
       const misil = misiles.create(nave.x, nave.y - (nave.displayHeight / 2), 'misil');
       misil.setScale(0.15);
@@ -147,7 +159,7 @@ class GameScene extends Phaser.Scene {
       this.registry.set('touchShoot', false);
     }
 
-    // Elimino los misiles que ya han salido fuera de la pantalla
+    // Elimino los misiles fuera de pantalla
     misiles.getChildren().forEach((m: Phaser.GameObjects.GameObject) => {
       const sprite = m as Phaser.Physics.Arcade.Image;
       if (sprite.y < -50) {
@@ -155,10 +167,9 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Genero un nuevo enemigo aleatorio cada 1.5 segundos
+    // Genero enemigos cada 1.5 segundos
     if (time > this.tiempoUltimoEnemigo + 1500) {
       this.tiempoUltimoEnemigo = time;
-
       const tipo = Phaser.Math.Between(0, 2);
       const spriteKey = tipo === 0 ? 'meteorito1' : tipo === 1 ? 'meteorito2' : 'bomba';
       const x = Phaser.Math.Between(30, width - 30);
@@ -167,21 +178,16 @@ class GameScene extends Phaser.Scene {
       enemigo.setVelocityY(Phaser.Math.Between(100, 200));
     }
 
-    // Si un enemigo o su explosión toca la nave, reinicio la puntuación
+    // Reviso colisiones entre enemigos y la nave
     enemigos.getChildren().forEach((e: Phaser.GameObjects.GameObject) => {
       const sprite = e as Phaser.Physics.Arcade.Image;
       const distanciaX = Math.abs(sprite.x - nave.x);
       const distanciaY = Math.abs(sprite.y - nave.y);
-
-      // Amplío el radio si el sprite ya es una explosión visual (aumenta su zona peligrosa)
       const radioColision = sprite.getData('esExplosion') ? 120 : 40;
 
       if (distanciaX < radioColision && distanciaY < radioColision) {
         sprite.setVelocityY(0);
-
         const key = sprite.texture.key;
-
-        // Aquí detecto el tipo de enemigo o explosión para cambiar el sprite
         if (key === 'meteorito1' || key === 'meteorito2') {
           sprite.setTexture('explosion');
           sprite.setScale(0.2);
@@ -191,16 +197,10 @@ class GameScene extends Phaser.Scene {
           sprite.setScale(0.9);
           sprite.setData('esExplosion', true);
         }
-
-        // Muy importante: aquí hago que si la nave toca cualquier enemigo o su explosión, la puntuación se reinicie
         this.scoreManager.init();
-
-        this.time.delayedCall(300, () => {
-          sprite.destroy();
-        });
+        this.time.delayedCall(300, () => sprite.destroy());
       }
 
-      // Elimino al enemigo si ya ha salido de la pantalla
       if (sprite.y > height + 50) {
         enemigos.remove(sprite, true, true);
       }
@@ -271,7 +271,6 @@ export class GamePage implements AfterViewInit, OnDestroy {
     const nuevaNave = scene.add.image(width / 2, height - 80, 'nave')
       .setOrigin(0.5)
       .setScale(0.18);
-
     scene.registry.set('nave', nuevaNave);
   };
 

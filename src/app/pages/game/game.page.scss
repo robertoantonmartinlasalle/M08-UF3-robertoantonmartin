@@ -1,7 +1,8 @@
+// Estilos para el contenedor principal del juego (canvas de Phaser)
 #phaser-game {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
+  width: 100vw; // Ocupar todo el ancho de la pantalla
+  height: 100vh; // Ocupar todo el alto de la pantalla
+  position: fixed; // Fijo para que se mantenga detrás de los botones
   top: 0;
   left: 0;
 
@@ -12,17 +13,57 @@
   }
 }
 
+// Estilo del botón de disparo táctil para móviles
 .disparo-btn {
   position: absolute;
-  bottom: 20px;
+  bottom: 20px; // Lo coloco en la parte inferior derecha
   right: 20px;
-  z-index: 10;
+  z-index: 10; // Encima del canvas
   padding: 12px 20px;
   font-size: 18px;
   border: none;
   border-radius: 10px;
-  background-color: #00ffcc;
+  background-color: #00ffcc; // Color llamativo para el botón
   color: black;
   font-weight: bold;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+// Botón de menú principal que despliega las opciones
+#btn-menu {
+  position: absolute;
+  top: 20px; // Posicionado en la parte superior
+  right: 20px; // Alineado a la derecha
+  z-index: 101;
+  padding: 10px 14px;
+  background-color: #00ffcc; // Mismo color que el botón de disparo
+  color: black;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+// Menú emergente con botones reanudar y reiniciar, oculto por defecto
+.menu-panel {
+  position: absolute;
+  top: 80px; // Debajo del botón de menú
+  right: 20px; // Alineado al mismo lado
+  display: none; // Se mostrará al hacer clic en el botón menú
+  flex-direction: column;
+  gap: 10px;
+  z-index: 102;
+}
+
+// Botones del menú desplegado
+.menu-panel button {
+  background-color: #00ffcc; // Color uniforme
+  color: black;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
