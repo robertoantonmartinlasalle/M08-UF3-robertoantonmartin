@@ -21,5 +21,9 @@ export const routes: Routes = [
     path: '', // Ruta raíz
     redirectTo: 'home', // Redirijo automáticamente a 'home' al iniciar la app
     pathMatch: 'full', // Aseguro que coincida exactamente la ruta vacía
+  },  {
+    path: 'score',
+    loadComponent: () => import('./pages/score/score.page').then( m => m.ScorePage)
   }
+
 ];

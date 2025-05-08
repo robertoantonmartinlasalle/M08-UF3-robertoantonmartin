@@ -1,7 +1,8 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import Phaser from 'phaser';
-import { ScoreManager } from './score-manager';
+import { ScoreManager } from '../score/score-manager';
+
 
 // Esta clase es la que contiene toda la lógica del juego que he desarrollado para esta práctica.
 // Aquí defino lo que se ve en pantalla, cómo se mueve la nave, cómo disparo, cómo aparecen los enemigos
