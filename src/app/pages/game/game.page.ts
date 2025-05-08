@@ -1,8 +1,8 @@
+// src/app/pages/game/game.page.ts
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import Phaser from 'phaser';
 import { ScoreManager } from '../score/score-manager';
-
 
 // Esta clase es la que contiene toda la lógica del juego que he desarrollado para esta práctica.
 // Aquí defino lo que se ve en pantalla, cómo se mueve la nave, cómo disparo, cómo aparecen los enemigos
@@ -130,7 +130,6 @@ class GameScene extends Phaser.Scene {
   }
 
   override update(time: number): void {
-    // Recupero todos los elementos que necesito para actualizar el juego
     const nave = this.registry.get('nave') as Phaser.GameObjects.Image;
     const keys = this.registry.get('keys') as any;
     const dir = this.registry.get('touchDirection');
@@ -187,21 +186,29 @@ class GameScene extends Phaser.Scene {
       const radioColision = sprite.getData('esExplosion') ? 120 : 40;
 
       if (distanciaX < radioColision && distanciaY < radioColision) {
+        // Si el enemigo o explosión impacta a la nave, termina la partida
+
         sprite.setVelocityY(0);
         const key = sprite.texture.key;
         if (key === 'meteorito1' || key === 'meteorito2') {
           sprite.setTexture('explosion');
           sprite.setScale(0.2);
-          sprite.setData('esExplosion', true);
         } else if (key === 'bomba') {
           sprite.setTexture('bombaColision');
           sprite.setScale(0.9);
-          sprite.setData('esExplosion', true);
         }
-        this.scoreManager.init();
-        this.time.delayedCall(300, () => sprite.destroy());
+        sprite.setData('esExplosion', true);
+
+        // Guardo la puntuación final antes de terminar la partida
+        this.scoreManager.guardarResultadoFinal();
+
+        // Espero 1 segundo y navego a la pantalla de puntuación
+        this.time.delayedCall(1000, () => {
+          window.location.href = '/score'; // Redirijo al jugador al finalizar la partida
+        });
       }
 
+      // Elimino los enemigos que se han salido de pantalla
       if (sprite.y > height + 50) {
         enemigos.remove(sprite, true, true);
       }
