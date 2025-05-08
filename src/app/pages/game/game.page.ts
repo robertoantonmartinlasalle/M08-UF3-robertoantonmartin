@@ -99,10 +99,12 @@ class GameScene extends Phaser.Scene {
       if (tipo === 'meteorito1' || tipo === 'meteorito2') {
         enemigoSprite.setTexture('explosion');
         enemigoSprite.setScale(0.2);
+        enemigoSprite.setData('esExplosion', true); // Marco como explosión para detección posterior
         this.scoreManager.add(1); // Sumo 1 punto si destruyo un meteorito
       } else if (tipo === 'bomba') {
         enemigoSprite.setTexture('bombaColision');
         enemigoSprite.setScale(0.9);
+        enemigoSprite.setData('esExplosion', true); // Marco como explosión para detección posterior
         this.scoreManager.add(1); // También sumo 1 punto por cada bomba destruida
       }
 
@@ -165,21 +167,33 @@ class GameScene extends Phaser.Scene {
       enemigo.setVelocityY(Phaser.Math.Between(100, 200));
     }
 
-    // Si un enemigo toca la nave, explota igual que si lo impactara un misil
+    // Si un enemigo o su explosión toca la nave, reinicio la puntuación
     enemigos.getChildren().forEach((e: Phaser.GameObjects.GameObject) => {
       const sprite = e as Phaser.Physics.Arcade.Image;
       const distanciaX = Math.abs(sprite.x - nave.x);
       const distanciaY = Math.abs(sprite.y - nave.y);
 
-      if (distanciaX < 40 && distanciaY < 40) {
+      // Amplío el radio si el sprite ya es una explosión visual (aumenta su zona peligrosa)
+      const radioColision = sprite.getData('esExplosion') ? 120 : 40;
+
+      if (distanciaX < radioColision && distanciaY < radioColision) {
         sprite.setVelocityY(0);
-        if (sprite.texture.key === 'meteorito1' || sprite.texture.key === 'meteorito2') {
+
+        const key = sprite.texture.key;
+
+        // Aquí detecto el tipo de enemigo o explosión para cambiar el sprite
+        if (key === 'meteorito1' || key === 'meteorito2') {
           sprite.setTexture('explosion');
           sprite.setScale(0.2);
-        } else if (sprite.texture.key === 'bomba') {
+          sprite.setData('esExplosion', true);
+        } else if (key === 'bomba') {
           sprite.setTexture('bombaColision');
           sprite.setScale(0.9);
+          sprite.setData('esExplosion', true);
         }
+
+        // Muy importante: aquí hago que si la nave toca cualquier enemigo o su explosión, la puntuación se reinicie
+        this.scoreManager.init();
 
         this.time.delayedCall(300, () => {
           sprite.destroy();
