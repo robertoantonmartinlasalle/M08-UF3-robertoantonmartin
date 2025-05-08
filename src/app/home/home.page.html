@@ -1,20 +1,25 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
+<!-- home.page.html -->
+<ion-content fullscreen>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <!-- Contenedor que centra todo vertical y horizontalmente -->
+  <div class="fullscreen-wrapper">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <!-- Caja visual del formulario -->
+    <div class="contenedor-home">
+      
+      <!-- Título principal -->
+      <h1>Guardianes de la Galaxia</h1>
+
+      <!-- Grupo del campo -->
+      <div class="campo-wrapper">
+        <label for="nombreJugador" class="campo-label">Nombre del jugador</label>
+        <input id="nombreJugador" type="text" [(ngModel)]="nombreJugador" class="campo-input" />
+      </div>
+
+      <!-- Botón con el mismo ancho que el input -->
+      <button class="jugar-btn" (click)="comenzarPartida()">JUGAR</button>
+
+    </div>
   </div>
+
 </ion-content>
