@@ -1,20 +1,24 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import Phaser from 'phaser';
+import { ScoreManager } from './score-manager';
 
-// Esta clase contiene toda la lógica principal del juego: carga de assets, creación de objetos,
-// control de movimientos, generación de enemigos, disparos y colisiones.
+// Esta clase es la que contiene toda la lógica del juego que he desarrollado para esta práctica.
+// Aquí defino lo que se ve en pantalla, cómo se mueve la nave, cómo disparo, cómo aparecen los enemigos
+// y cómo se gestionan las colisiones y la puntuación.
 class GameScene extends Phaser.Scene {
   private misiles!: Phaser.Physics.Arcade.Group;
   private enemigos!: Phaser.Physics.Arcade.Group;
-  private tiempoUltimoEnemigo = 0; // Controla cada cuánto tiempo genero enemigos
+  private scoreManager!: ScoreManager;
+  private tiempoUltimoEnemigo = 0;
 
   constructor() {
+    // Le doy un nombre a la escena que voy a utilizar
     super({ key: 'game' });
   }
 
   preload(): void {
-    // En esta función cargo todas las imágenes necesarias para el juego (fondos, nave, misiles, enemigos y explosiones)
+    // En esta función cargo todas las imágenes necesarias para el juego (nave, fondo, misiles, enemigos, etc.)
     this.load.image('background', 'assets/game/background.png');
     this.load.image('background-vertical', 'assets/game/background-vertical.png');
     this.load.image('nave', 'assets/game/nave.png');
@@ -30,17 +34,17 @@ class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Aquí detecto si el dispositivo está en modo vertical (por ejemplo, móviles)
+    // Detecto si el dispositivo es móvil y está en vertical para adaptar el fondo del juego
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isVertical = height > width;
     const fondoKey = (isMobile && isVertical) ? 'background-vertical' : 'background';
 
-    // Coloco el fondo adaptado a la pantalla y lo guardo en el registro
+    // Añado el fondo al juego y lo ajusto al tamaño de pantalla
     const bg = this.add.image(0, 0, fondoKey).setOrigin(0, 0);
     bg.setDisplaySize(width, height);
     this.registry.set('currentBackground', bg);
 
-    // Creo la nave y le aplico una animación de entrada desde la parte inferior
+    // Añado la nave del jugador en la parte inferior con una pequeña animación de entrada
     const nave = this.add.image(width / 2, height + 100, 'nave')
       .setOrigin(0.5)
       .setScale(0.18);
@@ -54,24 +58,28 @@ class GameScene extends Phaser.Scene {
 
     this.registry.set('nave', nave);
 
-    // Capturo las teclas necesarias para controlar la nave (flechas, A, D y espacio)
+    // Capturo las teclas que utilizaré para moverme (A y D) y disparar (barra espaciadora)
     const cursors = this.input.keyboard?.createCursorKeys();
     const keys = this.input.keyboard?.addKeys('A,D,SPACE');
     this.registry.set('keys', { cursors, keys });
 
-    // Creo los grupos físicos de misiles y enemigos
+    // Inicializo los grupos que contendrán los misiles y los enemigos
     this.misiles = this.physics.add.group();
     this.enemigos = this.physics.add.group();
     this.registry.set('misiles', this.misiles);
     this.registry.set('enemigos', this.enemigos);
 
-    // Si el jugador pulsa el botón táctil de disparo, lo marco en el registro
+    // Inicio el sistema de puntuación que he creado con una clase aparte
+    this.scoreManager = new ScoreManager(this);
+    this.scoreManager.init();
+
+    // Añado soporte táctil para disparar desde móvil
     const botonDisparo = document.getElementById('boton-disparo');
     botonDisparo?.addEventListener('click', () => {
       this.registry.set('touchShoot', true);
     });
 
-    // Control táctil: muevo la nave a izquierda o derecha según la zona pulsada
+    // Añado control táctil para mover la nave con el dedo (izquierda o derecha)
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       const dir = pointer.x < width / 2 ? 'izq' : 'der';
       this.registry.set('touchDirection', dir);
@@ -81,34 +89,33 @@ class GameScene extends Phaser.Scene {
       this.registry.set('touchDirection', null);
     });
 
-    // Aquí gestiono las colisiones entre misiles y enemigos
+    // Configuro lo que pasa cuando un misil impacta a un enemigo
     this.physics.add.overlap(this.misiles, this.enemigos, (misil, enemigo) => {
       const enemigoSprite = enemigo as Phaser.Physics.Arcade.Image;
       const tipo = enemigoSprite.texture.key;
 
-      // Detengo el movimiento del enemigo cuando recibe impacto
       enemigoSprite.setVelocityY(0);
 
-      // Cambiaré la textura según el tipo de enemigo, y ajustaré su escala para simular la explosión
       if (tipo === 'meteorito1' || tipo === 'meteorito2') {
         enemigoSprite.setTexture('explosion');
-        enemigoSprite.setScale(0.2); // Escala reducida para explosión de meteorito
+        enemigoSprite.setScale(0.2);
+        this.scoreManager.add(1); // Sumo 1 punto si destruyo un meteorito
       } else if (tipo === 'bomba') {
         enemigoSprite.setTexture('bombaColision');
-        enemigoSprite.setScale(0.9); // Escala grande para explosión de bomba (el doble)
+        enemigoSprite.setScale(0.9);
+        this.scoreManager.add(1); // También sumo 1 punto por cada bomba destruida
       }
 
-      // Elimino el misil tras impactar
-      misil.destroy();
+      misil.destroy(); // El misil desaparece al impactar
 
-      // Espero 300 milisegundos para mostrar la explosión antes de destruir el enemigo
       this.time.delayedCall(300, () => {
-        enemigoSprite.destroy();
+        enemigoSprite.destroy(); // El enemigo también desaparece después de un tiempo
       });
     });
   }
 
   override update(time: number): void {
+    // Recupero todos los elementos que necesito para actualizar el juego
     const nave = this.registry.get('nave') as Phaser.GameObjects.Image;
     const keys = this.registry.get('keys') as any;
     const dir = this.registry.get('touchDirection');
@@ -122,7 +129,7 @@ class GameScene extends Phaser.Scene {
     const width = this.scale.width;
     const height = this.scale.height;
 
-    // Movimiento con teclado y controles táctiles
+    // Muevo la nave hacia la izquierda o la derecha con teclado o control táctil
     if (keys.cursors?.left?.isDown || keys.keys?.A?.isDown || dir === 'izq') {
       nave.x = Math.max(nave.x - speed, nave.width * nave.scaleX / 2);
     }
@@ -130,7 +137,7 @@ class GameScene extends Phaser.Scene {
       nave.x = Math.min(nave.x + speed, width - nave.width * nave.scaleX / 2);
     }
 
-    // Disparo por teclado o botón táctil
+    // Si se pulsa espacio o el botón táctil, disparo un misil desde la nave
     if (Phaser.Input.Keyboard.JustDown(keys.keys.SPACE) || shouldShoot) {
       const misil = misiles.create(nave.x, nave.y - (nave.displayHeight / 2), 'misil');
       misil.setScale(0.15);
@@ -138,7 +145,7 @@ class GameScene extends Phaser.Scene {
       this.registry.set('touchShoot', false);
     }
 
-    // Elimino misiles fuera de pantalla
+    // Elimino los misiles que ya han salido fuera de la pantalla
     misiles.getChildren().forEach((m: Phaser.GameObjects.GameObject) => {
       const sprite = m as Phaser.Physics.Arcade.Image;
       if (sprite.y < -50) {
@@ -146,7 +153,7 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Genero enemigos cada 1.5 segundos
+    // Genero un nuevo enemigo aleatorio cada 1.5 segundos
     if (time > this.tiempoUltimoEnemigo + 1500) {
       this.tiempoUltimoEnemigo = time;
 
@@ -158,17 +165,14 @@ class GameScene extends Phaser.Scene {
       enemigo.setVelocityY(Phaser.Math.Between(100, 200));
     }
 
-    // Compruebo si los enemigos llegan a la posición exacta de la nave para explotarlos
+    // Si un enemigo toca la nave, explota igual que si lo impactara un misil
     enemigos.getChildren().forEach((e: Phaser.GameObjects.GameObject) => {
       const sprite = e as Phaser.Physics.Arcade.Image;
-
-      // Solo explotan si están muy cerca de la posición exacta de la nave (tanto en X como Y)
       const distanciaX = Math.abs(sprite.x - nave.x);
       const distanciaY = Math.abs(sprite.y - nave.y);
 
       if (distanciaX < 40 && distanciaY < 40) {
         sprite.setVelocityY(0);
-
         if (sprite.texture.key === 'meteorito1' || sprite.texture.key === 'meteorito2') {
           sprite.setTexture('explosion');
           sprite.setScale(0.2);
@@ -182,7 +186,7 @@ class GameScene extends Phaser.Scene {
         });
       }
 
-      // Elimino enemigos que salen por abajo sin tocar la nave
+      // Elimino al enemigo si ya ha salido de la pantalla
       if (sprite.y > height + 50) {
         enemigos.remove(sprite, true, true);
       }
@@ -190,7 +194,6 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// Componente Angular que inicia el juego de Phaser y gestiona el redimensionado en móviles
 @Component({
   selector: 'app-game',
   standalone: true,
@@ -203,8 +206,8 @@ export class GamePage implements AfterViewInit, OnDestroy {
 
   constructor() {}
 
-  // Al iniciar la vista, configuro y lanzo el juego con Phaser
   ngAfterViewInit(): void {
+    // Aquí creo la configuración del juego con el tamaño de pantalla, fondo, físicas y la escena principal
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
       width: window.innerWidth,
@@ -228,7 +231,7 @@ export class GamePage implements AfterViewInit, OnDestroy {
     window.addEventListener('resize', this.resizeGame);
   }
 
-  // Si cambia el tamaño de pantalla, reajusto el fondo y la nave
+  // Esta función se ejecuta al cambiar el tamaño de la pantalla para reajustar el fondo y la nave
   resizeGame = () => {
     if (!this.phaserGame?.canvas) return;
 
@@ -258,8 +261,8 @@ export class GamePage implements AfterViewInit, OnDestroy {
     scene.registry.set('nave', nuevaNave);
   };
 
+  // Al salir de la pantalla elimino el listener de redimensionar
   ngOnDestroy(): void {
-    // Elimino el listener de redimensionado para evitar fugas de memoria
     window.removeEventListener('resize', this.resizeGame);
   }
 }
