@@ -1,0 +1,14 @@
+/* src/global.scss */
+
+/* Fuerzo fondo negro global para evitar fondo blanco en Android */
+body {
+  background-color: #000 !important;
+  color: #00ffcc;
+}
+
+/* Evito márgenes o relleno que puedan interferir */
+html, body, ion-app, ion-content {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
