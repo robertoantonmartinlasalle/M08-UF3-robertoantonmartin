@@ -1,114 +1,112 @@
 /* src/app/pages/score/score.page.scss */
 
 // Fondo general negro espacial
+// Aquí añado overflow-y: auto para permitir que el usuario pueda hacer scroll hacia abajo en Android si el contenido se desborda verticalmente.
 ion-content {
-    --background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  --background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto; // Permite desplazamiento vertical en móviles
+}
+
+// Contenedor que centra todo el contenido
+.fullscreen-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// Caja principal con bordes neón
+.contenedor-home {
+  background-color: #011;
+  padding: 40px;
+  border-radius: 20px;
+  border: 2px solid #00ffcc;
+  box-shadow: 0 0 20px #00ffcc;
+  text-align: center;
+  width: 90%;
+  max-width: 500px;
+  box-sizing: border-box;
+}
+
+// Título principal
+h1, h2 {
+  color: #00ffcc;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px #00ffcc;
+}
+
+// Texto de puntuación
+p {
+  color: #00ffcc;
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+// Mensaje especial de récord
+.mensaje-record {
+  margin-top: 15px;
+  color: #00ffcc;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 0 0 8px #00ffcc;
+}
+
+// Tabla de puntuaciones
+.tabla-ranking {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  color: #00ffcc;
+}
+
+.tabla-ranking th,
+.tabla-ranking td {
+  border: 1px solid #00ffcc;
+  padding: 10px;
+  text-align: center;
+}
+
+.tabla-ranking th {
+  background-color: #012;
+}
+
+.tabla-ranking tr:nth-child(even) {
+  background-color: #021;
+}
+
+// Botón "Volver a jugar" con estilo neón bien alineado
+.jugar-btn {
+  width: 100%;
+  max-width: 100%;
+  height: 50px;
+  padding: 14px 20px;
+  font-size: 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  color: black;
+  background-color: #00ffcc;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 0 12px #00ffcc, 0 0 24px #00ffcc;
+  transition: transform 0.2s ease;
+  margin-top: 20px;
+  display: block;
+  text-align: center;
+  box-sizing: border-box;
+  align-self: center;
+
+  // Elimina el resaltado azul al pulsar en móviles o al enfocar con teclado
+  &::part(native) {
+    background: none;
   }
-  
-  // Contenedor que centra todo el contenido
-  .fullscreen-wrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  // Caja principal con bordes neón
-  .contenedor-home {
-    background-color: #011;
-    padding: 40px;
-    border-radius: 20px;
-    border: 2px solid #00ffcc;
-    box-shadow: 0 0 20px #00ffcc;
-    text-align: center;
-    width: 90%;
-    max-width: 500px;
-    box-sizing: border-box;
-  }
-  
-  // Título principal
-  h1, h2 {
-    color: #00ffcc;
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px #00ffcc;
-  }
-  
-  // Texto de puntuación
-  p {
-    color: #00ffcc;
-    font-size: 16px;
-    margin: 10px 0;
-  }
-  
-  // Mensaje especial de récord
-  .mensaje-record {
-    margin-top: 15px;
-    color: #00ffcc;
-    font-weight: bold;
-    font-size: 18px;
-    text-shadow: 0 0 8px #00ffcc;
-  }
-  
-  // Tabla de puntuaciones
-  .tabla-ranking {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    color: #00ffcc;
-  }
-  
-  .tabla-ranking th,
-  .tabla-ranking td {
-    border: 1px solid #00ffcc;
-    padding: 10px;
-    text-align: center;
-  }
-  
-  .tabla-ranking th {
-    background-color: #012;
-  }
-  
-  .tabla-ranking tr:nth-child(even) {
-    background-color: #021;
-  }
-  
-  // Botón "Volver a jugar" con estilo neón bien alineado
-  .jugar-btn {
-    width: 100%;
-    max-width: 100%;
-    height: 50px;
-    padding: 14px 20px;
-    font-size: 18px;
-    border-radius: 8px;
-    font-weight: bold;
-    color: black;
-    background-color: #00ffcc;
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 0 12px #00ffcc, 0 0 24px #00ffcc;
-    transition: transform 0.2s ease;
-    margin-top: 20px;
-    display: block;
-    text-align: center;
-    box-sizing: border-box;
-    align-self: center;
-  
-    // Elimina el resaltado azul al pulsar en móviles o al enfocar con teclado
-    &::part(native) {
-      background: none;
-    }
-  
-   
-  }
-  
-  
-  .jugar-btn:hover {
-    transform: scale(1.05);
-  }
-  
+}
+
+.jugar-btn:hover {
+  transform: scale(1.05);
+}
