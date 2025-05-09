@@ -19,6 +19,8 @@ export class ScorePage {
   esNuevoRecord: boolean = false;
   rankingGlobal: RegistroPuntuacion[] = [];
 
+  private audio: HTMLAudioElement; // Variable para almacenar la música de puntuación
+
   constructor(private router: Router) {
     // Recupero los datos del jugador y su rendimiento
     this.nombreJugador = ScoreManager.getNombreJugador();
@@ -28,10 +30,20 @@ export class ScorePage {
 
     // Cargo el ranking global ordenado por puntuación
     this.rankingGlobal = ScoreManager.getRanking();
+
+    // Inicializo y reproduzco la música de fondo para la pantalla de puntuación
+    this.audio = new Audio('assets/sounds/puntuacion.mp3');
+    this.audio.loop = true;
+    this.audio.volume = 0.5;
+    this.audio.play().catch(e => console.warn('No se pudo reproducir la música de puntuación:', e));
   }
 
   // Método que se ejecuta al pulsar el botón "Volver a jugar"
   volverAlInicio() {
+    // Detengo la música antes de salir
+    this.audio.pause();
+    this.audio.currentTime = 0;
+
     // Redirijo a /home limpiando la ruta anterior para forzar recarga completa
     this.router.navigate(['/home'], { replaceUrl: true });
   }

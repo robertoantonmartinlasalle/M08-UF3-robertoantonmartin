@@ -12,6 +12,8 @@ class GameScene extends Phaser.Scene {
   private enemigos!: Phaser.Physics.Arcade.Group;
   private scoreManager!: ScoreManager;
   private tiempoUltimoEnemigo = 0;
+  private sonidoDisparo!: Phaser.Sound.BaseSound; // Variable para almacenar el sonido de disparo
+  private sonidoExplosion!: Phaser.Sound.BaseSound; // Variable para almacenar el sonido de explosión
 
   constructor() {
     // Asigno un nombre a la escena
@@ -29,6 +31,15 @@ class GameScene extends Phaser.Scene {
     this.load.image('bomba', 'assets/game/Bomba.png');
     this.load.image('explosion', 'assets/game/Explosion.png');
     this.load.image('bombaColision', 'assets/game/Bomba_colision.png');
+
+    // Cargamos el sonido de disparo que se reproducirá al lanzar un misil
+    this.load.audio('sonidoDisparo', 'assets/sounds/disparo.mp3');
+
+    // Cargamos el sonido de explosión que se reproducirá al destruir enemigos
+    this.load.audio('sonidoExplosion', 'assets/sounds/explosion.mp3');
+
+    // Cargamos la música de fondo que se reproducirá durante toda la partida en bucle
+    this.load.audio('musicaFondo', 'assets/sounds/Attack of the Glyphids.mp3');
   }
 
   create(): void {
@@ -67,6 +78,16 @@ class GameScene extends Phaser.Scene {
     this.scoreManager = new ScoreManager(this);
     this.scoreManager.init();
 
+    // Inicializo el sonido de disparo para usarlo más adelante
+    this.sonidoDisparo = this.sound.add('sonidoDisparo');
+
+    // Inicializo el sonido de explosión para usarlo cuando se destruye un enemigo
+    this.sonidoExplosion = this.sound.add('sonidoExplosion');
+
+    // Reproduzco la música de fondo en bucle durante toda la partida
+    const musicaFondo = this.sound.add('musicaFondo', { loop: true, volume: 0.5 });
+    musicaFondo.play();
+
     // Disparo táctil desde botón en móvil
     const botonDisparo = document.getElementById('boton-disparo');
     botonDisparo?.addEventListener('click', () => {
@@ -93,11 +114,17 @@ class GameScene extends Phaser.Scene {
         enemigoSprite.setScale(0.2);
         enemigoSprite.setData('esExplosion', true);
         this.scoreManager.add(1);
+
+        // Reproduzco el sonido de explosión al destruir el enemigo
+        this.sonidoExplosion?.play();
       } else if (tipo === 'bomba') {
         enemigoSprite.setTexture('bombaColision');
         enemigoSprite.setScale(0.9);
         enemigoSprite.setData('esExplosion', true);
         this.scoreManager.add(1);
+
+        // Reproduzco el sonido de explosión al destruir la bomba
+        this.sonidoExplosion?.play();
       }
 
       misil.destroy();
@@ -155,6 +182,10 @@ class GameScene extends Phaser.Scene {
       const misil = misiles.create(nave.x, nave.y - (nave.displayHeight / 2), 'misil');
       misil.setScale(0.15);
       misil.setVelocityY(-400);
+
+      // Reproduzco el sonido al disparar
+      this.sonidoDisparo?.play();
+
       this.registry.set('touchShoot', false);
     }
 
