@@ -1,4 +1,4 @@
-// home.page.ts
+// src/app/pages/home/home.page.ts
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
@@ -17,11 +17,12 @@ export class HomePage {
 
   constructor(private router: Router) {}
 
-  // Función que se ejecuta al pulsar el botón JUGAR
+  // Esta función se ejecuta al pulsar el botón JUGAR
   comenzarPartida() {
     if (this.nombreJugador.trim() !== '') {
       localStorage.setItem('nombreJugador', this.nombreJugador);
-      this.router.navigateByUrl('/game'); // Navegamos a la pantalla del juego
+      // Usamos replaceUrl: true para forzar que la página home se recargue correctamente al volver
+      this.router.navigate(['/game'], { replaceUrl: true });
     } else {
       alert('Por favor, introduce tu nombre antes de comenzar.');
     }

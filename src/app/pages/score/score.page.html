@@ -1,13 +1,48 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>score</ion-title>
-  </ion-toolbar>
-</ion-header>
+<!-- src/app/pages/score/score.page.html -->
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">score</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content fullscreen>
+  <div class="fullscreen-wrapper">
+    <div class="contenedor-home">
+      
+      <!-- Título principal de la pantalla de final de partida -->
+      <h1>Fin de la partida</h1>
+
+      <!-- Información básica del jugador -->
+      <p><strong>Jugador:</strong> {{ nombreJugador }}</p>
+      <p><strong>Puntuación:</strong> {{ ultimaPuntuacion }}</p>
+      <p><strong>Récord personal:</strong> {{ puntuacionMaxima }}</p>
+
+      <!-- Mensaje si ha superado su propio récord -->
+      <div *ngIf="esNuevoRecord" class="mensaje-record">
+        🎉 ¡Nuevo récord personal! 🎉
+      </div>
+
+      <hr />
+
+      <!-- Sección de ranking global -->
+      <h2>🏆 Ranking global</h2>
+
+      <!-- Tabla que muestra los mejores resultados (ya ordenados por código) -->
+      <table class="tabla-ranking">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            <th>Puntos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Solo muestro los 10 mejores -->
+          <tr *ngFor="let r of rankingGlobal.slice(0, 10)">
+            <td>{{ r.nombre }}</td>
+            <td>{{ r.puntuacion }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Botón para volver a la pantalla de inicio -->
+      <ion-button expand="block" class="jugar-btn" (click)="volverAlInicio()">
+        Volver a jugar
+      </ion-button>
+    </div>
+  </div>
 </ion-content>

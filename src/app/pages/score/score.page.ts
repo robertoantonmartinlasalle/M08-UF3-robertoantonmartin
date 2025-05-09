@@ -1,20 +1,38 @@
-import { Component, OnInit } from '@angular/core';
+// src/app/pages/score/score.page.ts
+import { Component } from '@angular/core';
+import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
+import { Router, RouterModule } from '@angular/router';
+import { ScoreManager, RegistroPuntuacion } from './score-manager';
 
 @Component({
   selector: 'app-score',
+  standalone: true,
+  imports: [IonicModule, CommonModule, RouterModule],
   templateUrl: './score.page.html',
   styleUrls: ['./score.page.scss'],
-  standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
-export class ScorePage implements OnInit {
+export class ScorePage {
+  nombreJugador: string = '';
+  ultimaPuntuacion: number = 0;
+  puntuacionMaxima: number = 0;
+  esNuevoRecord: boolean = false;
+  rankingGlobal: RegistroPuntuacion[] = [];
 
-  constructor() { }
+  constructor(private router: Router) {
+    // Recupero los datos del jugador y su rendimiento
+    this.nombreJugador = ScoreManager.getNombreJugador();
+    this.ultimaPuntuacion = ScoreManager.getUltimaPuntuacion();
+    this.puntuacionMaxima = ScoreManager.getMaximaPuntuacion(this.nombreJugador);
+    this.esNuevoRecord = this.ultimaPuntuacion >= this.puntuacionMaxima;
 
-  ngOnInit() {
+    // Cargo el ranking global ordenado por puntuación
+    this.rankingGlobal = ScoreManager.getRanking();
   }
 
+  // Método que se ejecuta al pulsar el botón "Volver a jugar"
+  volverAlInicio() {
+    // Redirijo a /home limpiando la ruta anterior para forzar recarga completa
+    this.router.navigate(['/home'], { replaceUrl: true });
+  }
 }
