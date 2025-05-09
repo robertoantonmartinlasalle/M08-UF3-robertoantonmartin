@@ -166,15 +166,15 @@ class GameScene extends Phaser.Scene {
       }
     });
 
-    // Genero enemigos nuevos cada 1.5 segundos
-    if (time > this.tiempoUltimoEnemigo + 1500) {
+    // Genero enemigos nuevos 
+    if (time > this.tiempoUltimoEnemigo + 500) {
       this.tiempoUltimoEnemigo = time;
       const tipo = Phaser.Math.Between(0, 2);
       const spriteKey = tipo === 0 ? 'meteorito1' : tipo === 1 ? 'meteorito2' : 'bomba';
       const x = Phaser.Math.Between(30, width - 30);
       const enemigo = enemigos.create(x, -50, spriteKey);
       enemigo.setScale(0.25);
-      enemigo.setVelocityY(Phaser.Math.Between(100, 200));
+      enemigo.setVelocityY(Phaser.Math.Between(300, 600));
     }
 
     // Compruebo colisiones entre enemigos y la nave
@@ -201,7 +201,7 @@ class GameScene extends Phaser.Scene {
         this.scoreManager.guardarResultadoFinal();
 
         // Redirijo a la pantalla de puntuación tras 1 segundo
-        this.time.delayedCall(1000, () => {
+        this.time.delayedCall(500, () => {
           window.location.href = '/score';
         });
       }
